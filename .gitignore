@@ -3,6 +3,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+intel_landscapes.v2.npz
+.intel_landscapes.v2.npz
 # C extensions
 *.so
 
