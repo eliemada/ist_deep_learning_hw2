@@ -236,14 +236,33 @@ def nucleus_sampling(logits, p=0.8):
 
     #select largest probabilities until p reached 
     sum_prob = 0
-    while sum_prob < p: 
+
+    #sort probabilities in descending order
+    sorted_prob, sorted_indices = torch.sort(probabilities, descending=True)
+
+    #summing up probabilities / cumulative series
+    cumulative_prob = torch.cumsum(sorted_prob, dim=0)
+
+    #checking when values reaches / exceeds p
+    cutoff_index = torch.searchsorted(cumulative_prob, p)
+
+    # get the indeces and probabilities
+    new_prob = sorted_prob[:cutoff_index + 1]
+    prob_indices = sorted_indices[:cutoff_index + 1]
+
+    #rescale
+    new_prob = new_prob / new_prob.sum()
+
+    #sample next token
+    selected_token = torch.multinomial(new_prob, num_samples=1)  
+
+    #index of new token
+    next_token = prob_indices[selected_token]
+    return next_token
 
 
 
 
-    return 0
-
-    raise NotImplementedError("Add your implementation.")
 
 
 def main(args):

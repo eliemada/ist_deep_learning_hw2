@@ -170,7 +170,6 @@ class Encoder(nn.Module):
         # Unpack the packed sequence
         enc_output, _ = torch.nn.utils.rnn.pad_packed_sequence(packed_output, batch_first=True)
         
-        #NEED to apply dropout again?
         enc_output = self.dropout(enc_output)
 
         final_hidden = (hidden, cell)
@@ -252,30 +251,21 @@ class Decoder(nn.Module):
         embedded = self.embedding(tgt)  # (batch_size, max_tgt_len, hidden_size)
         embedded = self.dropout(embedded)
 
-        #Question: This correct? have prediction if only start token? What does  max_tgt_len == 1 mean? 
         if max_tgt_len == 1:
             # when only start token - how to handle this? 
             input_t = embedded[:, 0, :].unsqueeze(1)  # <SOS> token embedding
             output, dec_state = self.lstm(input_t, dec_state)  # First timestep
             outputs.append(output)
         else:
-            #computed differently if done with attention
-
             # not only start tokem
             input_t = embedded[:, 0, :].unsqueeze(1)
             for t in range(1, max_tgt_len):
                 output, dec_state = self.lstm(input_t, dec_state)
-                output = self.dropout(output)
                 outputs.append(output)
                 input_t = embedded[:, t, :].unsqueeze(1)
 
-
-        #Question: Need to remove endings according to src length? 
         outputs = torch.cat(outputs, dim=1)  # (batch_size, max_tgt_len, hidden_size)
         
-        #dropout here? Or before ! Ask!
-        #outputs = self.dropout(outputs)
-
 
         if self.attn is not None:
             outputs = self.attn(
@@ -284,9 +274,8 @@ class Decoder(nn.Module):
                 src_lengths,
             )
 
-        #neeed to remove if longer than sequence? - no also in target included? How loss calculated? 
 
-        #DROPOUT? - apply dropout to final outout?
+        outputs = self.dropout(outputs)
 
         return outputs, dec_state
 
